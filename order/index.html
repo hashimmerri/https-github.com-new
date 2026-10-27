@@ -742,7 +742,7 @@
           <label data-area="both"><input type="radio" name="payment" value="kuraimi">الكريمي</label>
           <label data-area="sanaa"><input type="radio" name="payment" value="cash">نقداً عند التسليم</label>
           <label data-area="other"><input type="radio" name="payment" value="hawala">حوالة باسم</label>
-          <label data-area="sanaa"><input type="radio" name="payment" value="other">أخرى</label>
+          <label data-area="both"><input type="radio" name="payment" value="other">أخرى</label>
         </div>
         <p class="error-msg">الرجاء اختيار طريقة الدفع</p>
       </div>
@@ -945,7 +945,12 @@
     }
   }
   cityRadios.forEach(function (r) {
-    r.addEventListener("change", updateCityFields);
+    r.addEventListener("change", function () {
+      samePhoneRadios.forEach(function (x) { x.checked = false; });
+      paymentRadios.forEach(function (x) { x.checked = false; });
+      updateCityFields();
+      updatePhoneField();
+    });
   });
   paymentRadios.forEach(function (r) {
     r.addEventListener("change", function () {
@@ -1143,17 +1148,9 @@
       // The city choice is never restored: the page always opens on the
       // city question. Saved answers reappear once the customer picks a city.
       otherCityInput.value = data.otherCity || "";
-      if (data.payment) {
-        var pr = form.querySelector('input[name="payment"][value="' + data.payment + '"]');
-        if (pr) pr.checked = true;
-      }
-      paymentOtherInput.value = data.paymentOther || "";
       document.getElementById("whatsapp").value = data.whatsapp || "";
-      if (data.samePhone === "yes" || data.samePhone === "no") {
-        var sp = form.querySelector('input[name="samePhone"][value="' + data.samePhone + '"]');
-        if (sp) sp.checked = true;
-      }
-      phoneInput.value = data.phone || "";
+      // Choices (delivery phone, payment) are never restored: the customer
+      // picks them fresh each time. Only typed text comes back.
       locDetailInput.value = data.locDetail || "";
       document.getElementById("notes").value = data.notes || "";
       // A pin from hours ago may not be where the customer is now.
@@ -1165,7 +1162,6 @@
         showLocated();
       }
       updateCityFields();
-      if (data.paymentOther) paymentOtherInput.value = data.paymentOther;
       updatePhoneField();
       updateTick(whatsappInput);
     } catch (e) {  }
