@@ -6,7 +6,7 @@
 <title>نموذج الطلب · TYMO</title>
 <meta name="description" content="نموذج سريع لإرسال بياناتك إلى تيمو عبر واتساب">
 <meta name="theme-color" content="#F3F3F6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E0E10" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#17171A" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,18 +38,19 @@
     :root {
       --accent: #FF005E;
       --accent-pressed: #D9003A;
+      /* Soft charcoal + warm cream (temporary until Design defines dark mode) */
       --accent-soft: rgba(255, 0, 94, 0.16);
-      --bg: #0E0E10;
-      --group: #1C1C1E;
-      --label: #F5F5F7;
-      --secondary: rgba(235, 235, 245, 0.6);
-      --tertiary: rgba(235, 235, 245, 0.3);
-      --separator: rgba(84, 84, 88, 0.6);
-      --fill: rgba(118, 118, 128, 0.24);
-      --thumb: #636366;
-      --bar: rgba(14, 14, 16, 0.72);
-      --error: #FF5A4F;
-      --ok: #32D74B;
+      --bg: #17171A;
+      --group: #222226;
+      --label: #F2EDE6;
+      --secondary: rgba(242, 237, 230, 0.58);
+      --tertiary: rgba(242, 237, 230, 0.36);
+      --separator: rgba(242, 237, 230, 0.10);
+      --fill: rgba(242, 237, 230, 0.08);
+      --thumb: rgba(242, 237, 230, 0.16);
+      --bar: rgba(23, 23, 26, 0.82);
+      --error: #D62B1F;
+      --ok: #1E8E3E;
     }
   }
 
@@ -97,18 +98,35 @@
     font-size: 15px;
     line-height: 1.4;
     margin: 0;
-    max-width: 34ch;
+    text-wrap: balance;
   }
 
   /* ---- Sections & grouped lists ---- */
   form { display: flex; flex-direction: column; }
   .section { margin-bottom: 26px; }
   .section-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--secondary);
-    margin: 0 16px 7px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--label);
+    margin: 0 4px 8px;
+    line-height: 1.4;
   }
+  .section-title .note {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--secondary);
+    margin-inline-start: 4px;
+  }
+  .row.bare { padding-top: 13px; padding-bottom: 13px; }
+  .valid-tick {
+    flex: none;
+    width: 20px; height: 20px;
+    color: var(--ok);
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.2s var(--ease), transform 0.25s var(--ease);
+  }
+  .field.is-valid .valid-tick { opacity: 1; transform: none; }
   .group {
     background: var(--group);
     border-radius: var(--radius);
@@ -235,6 +253,138 @@
   }
   .segmented label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
 
+  /* ---- Yes / No choice ---- */
+  .choice {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .choice label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 13px 8px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--label);
+    background: var(--group);
+    border: 1.5px solid var(--separator);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease), background-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease);
+  }
+  .choice label:active { transform: scale(0.98); }
+  .choice input { position: absolute; opacity: 0; pointer-events: none; }
+  .choice label:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .choice label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .choice-field.invalid .choice label { border-color: var(--error); }
+  .choice-field .error-msg { margin: 8px 4px 0; }
+  .choice-field.invalid .error-msg { display: block; animation: nudge 0.4s var(--ease); }
+  
+
+  /* ---- Step reveal: only the city question until it is answered ---- */
+  form:not(.city-chosen) .after-city { display: none !important; }
+  .segmented:not(:has(input:checked)) .thumb { opacity: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    form.city-chosen .after-city { animation: rise 0.45s var(--ease) both; }
+  }
+  .choice.four { grid-template-columns: 1fr 1fr; }
+  .choice label[hidden] { display: none; }
+  .sub-note {
+    font-size: 13px;
+    color: var(--secondary);
+    margin: 8px 4px 0;
+    line-height: 1.5;
+  }
+  
+  .locate-big { line-height: 1.35; text-align: start; }
+
+  /* ---- Compact connected choice (city, phone, payment) ---- */
+  .seg {
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 0;
+    padding: 3px;
+    background: var(--group);
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 0.5px var(--separator);
+    isolation: isolate;
+    transition: box-shadow 0.25s var(--ease);
+  }
+  .seg-thumb {
+    position: absolute;
+    top: 3px; bottom: 3px; left: 0;
+    width: 0;
+    border-radius: 9px;
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px rgba(255, 0, 94, 0.35);
+    opacity: 0;
+    transform: translateX(0) scale(0.92);
+    transition: transform 0.42s var(--ease), width 0.42s var(--ease), opacity 0.25s var(--ease);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .seg.has-value .seg-thumb { opacity: 1; }
+  .seg label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 6px 4px;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--secondary);
+    cursor: pointer;
+    border-radius: 9px;
+    transition: color 0.25s var(--ease), opacity 0.15s;
+    -webkit-user-select: none;
+            user-select: none;
+  }
+  .seg label + label::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 30%; bottom: 30%;
+    width: 0.5px;
+    background: var(--separator);
+    transition: opacity 0.2s var(--ease);
+  }
+  .seg label.no-div::before { opacity: 0; }
+  .seg label[hidden] { display: none; }
+
+  .seg label:active { opacity: 0.6; }
+  .seg label:has(input:checked) { color: var(--accent); font-weight: 600; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  /* Dark mode: quiet grey selection (owner choice C, 28 Oct) */
+  @media (prefers-color-scheme: dark) {
+    .seg-thumb { background: rgba(242, 237, 230, 0.14); box-shadow: none; }
+    .seg label:has(input:checked) { color: var(--label); }
+    .locate-wrap .locate-big:not(.is-done) { background: transparent; }
+  }
+  .seg.compact { display: flex; }
+  .seg.compact label { flex: 1 1 auto; font-size: 14px; white-space: nowrap; padding: 6px 10px; }
+  .choice-field.invalid .seg { box-shadow: inset 0 0 0 1px var(--error); }
+  .reveal { margin-top: 8px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal:not([hidden]) { animation: drop 0.35s var(--ease) both; }
+  }
+  @keyframes drop {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+  }
+
   /* ---- Switch row ---- */
   .switch-row {
     flex-direction: row;
@@ -272,6 +422,72 @@
   .switch:checked { background: var(--accent); }
   .switch:checked::before { transform: translateX(-20px); }
   .switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- Big location button ---- */
+  .locate-wrap { margin-top: 12px; text-align: center; }
+  .locate-big {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 14px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid rgba(255, 0, 94, 0.45);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease), background-color 0.2s var(--ease);
+  }
+  .locate-big:active:not(:disabled) { transform: scale(0.98); }
+  .locate-big:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .locate-big:disabled { cursor: progress; }
+  .locate-big .pin {
+    position: relative;
+    flex: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: grid;
+    place-items: center;
+  }
+  .locate-big .pin svg { width: 15px; height: 15px; }
+  .locate-big.is-locating .pin::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: ping 1.4s var(--ease) infinite;
+  }
+  .locate-big.is-done {
+    color: var(--ok);
+    border-color: var(--ok);
+    background: transparent;
+  }
+  .locate-big.is-done .pin { background: var(--ok); }
+  .locate-big.attention { animation: attention 0.9s var(--ease) 2; }
+  @keyframes attention {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 94, 0.45); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 0, 94, 0); }
+  }
+  .locate-wrap .locate-status { margin-top: 8px; text-align: center; }
+  .locate-status.muted { color: var(--secondary); }
+  .loc-reminder {
+    margin: 8px 0 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    text-align: center;
+    line-height: 1.5;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .loc-reminder:not([hidden]) { animation: drop 0.35s var(--ease) both; }
+  }
 
   /* ---- Location cell ---- */
   .locate-btn {
@@ -394,7 +610,7 @@
 
   /* ---- Entrance ---- */
   @media (prefers-reduced-motion: no-preference) {
-    header.brand, .section, .actions {
+    header.brand, .section:not(.after-city) {
       animation: rise 0.7s var(--ease) both;
     }
     .section:nth-of-type(1) { animation-delay: 0.06s; }
@@ -427,114 +643,127 @@
   <header class="brand">
     <div class="mark">TYMO</div>
     <h1>بيانات الطلب</h1>
-    <p>عبّي البيانات وسيتم تحويلك مباشرة للواتساب لإتمام طلبك معنا</p>
+    <p>قومي بتعبئة البيانات وسيتم تحويلك مباشرة للواتساب لإتمام طلبك معنا</p>
   </header>
 
-  <form id="orderForm" novalidate>
+  <form id="orderForm" novalidate autocomplete="off">
 
     <section class="section">
-      <h2 class="section-title">مكان التوصيل</h2>
-      <div class="group">
-        <fieldset class="row" data-field="cityType">
-          <legend>المدينة</legend>
-          <div class="segmented">
-            <span class="thumb" aria-hidden="true"></span>
-            <label>
-              <input type="radio" name="cityType" value="sanaa" checked>
-              داخل صنعاء
-            </label>
-            <label>
-              <input type="radio" name="cityType" value="other">
-              مدينة أخرى
-            </label>
-          </div>
-        </fieldset>
-
-        <div class="row field" id="otherCityField" hidden data-field="otherCity">
-          <label class="label" for="otherCity">اسم المدينة أو المكان</label>
-          <input type="text" id="otherCity" name="otherCity" autocomplete="address-level2" placeholder="مثال: عدن، تعز، إب">
-          <p class="error-msg">الرجاء كتابة اسم المدينة أو المكان</p>
+      <h2 class="section-title" id="cityTitle">مكان التوصيل</h2>
+      <div class="choice-field" id="cityField">
+        <div class="seg" role="radiogroup" aria-labelledby="cityTitle">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <label><input type="radio" name="cityType" value="sanaa">داخل صنعاء</label>
+          <label><input type="radio" name="cityType" value="other">مدينة أخرى</label>
+        </div>
+      </div>
+      <div class="group reveal" id="otherCityField" hidden>
+        <div class="row field bare" data-field="otherCity">
+          <input type="text" id="otherCity" name="otherCity" autocomplete="address-level2" placeholder="اسم المدينة، مثال: عدن، تعز، إب" maxlength="20" aria-label="اسم المدينة أو المكان">
+          <p class="error-msg">الرجاء كتابة اسم المدينة أو المكان (حرفان على الأقل)</p>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <h2 class="section-title">بياناتك</h2>
+    <section class="section after-city">
+      <h2 class="section-title"><label for="name" id="nameLabel">الاسم</label><span class="note">(سيتم كتابة هذا الاسم في الفاتورة)</span></h2>
       <div class="group">
-        <div class="row field" data-field="name">
-          <label class="label" for="name" id="nameLabel">الاسم</label>
-          <input type="text" id="name" name="name" autocomplete="name" placeholder="اكتبي الاسم" required>
+        <div class="row field bare" data-field="name">
+          <input type="text" id="name" name="name" autocomplete="name" maxlength="60" required>
           <p class="error-msg" id="nameError">الرجاء كتابة الاسم</p>
         </div>
       </div>
-      <p class="footnote" id="nameHint">سيُكتب هذا الاسم في الإيصال</p>
     </section>
 
-    <section class="section">
-      <h2 class="section-title">التواصل</h2>
+    <section class="section after-city">
+      <h2 class="section-title"><label for="whatsapp">رقم الواتساب</label><span class="note">(سيتم إرسال فاتورتكم لهذا الرقم بالواتساب)</span></h2>
       <div class="group">
-        <div class="row field" data-field="whatsapp">
-          <label class="label" for="whatsapp">رقم الواتساب</label>
+        <div class="row field bare" data-field="whatsapp">
           <div class="phone-group">
             <span class="phone-prefix">+967</span>
             <input type="tel" id="whatsapp" name="whatsapp" inputmode="numeric" autocomplete="tel" placeholder="7XXXXXXXX" required>
+            <svg class="valid-tick" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm3.7 5.8-4.4 4.6a.8.8 0 0 1-1.1 0L4.3 8.5a.8.8 0 1 1 1.1-1.1l1.4 1.4 3.8-4a.8.8 0 1 1 1.1 1.1Z"/></svg>
           </div>
           <p class="error-msg" id="whatsappError">يجب أن يتكون الرقم من 9 أرقام ويبدأ بالرقم 7</p>
         </div>
+      </div>
+    </section>
 
-        <label class="row switch-row">
-          <span>رقم التواصل للتوصيل هو نفس رقم الواتساب</span>
-          <input type="checkbox" class="switch" id="samePhone" role="switch">
-        </label>
-
-        <div class="row field" id="phoneField" data-field="phone">
-          <label class="label" for="phone">رقم هاتف آخر للتواصل عند التوصيل</label>
+    <section class="section after-city">
+      <h2 class="section-title" id="samePhoneTitle">يتواصل بكم السائق لتسليم الطلب على:</h2>
+      <div class="choice-field" id="samePhoneField">
+        <div class="seg" role="radiogroup" aria-labelledby="samePhoneTitle">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <label><input type="radio" name="samePhone" value="yes">رقم الواتساب</label>
+          <label><input type="radio" name="samePhone" value="no">رقم آخر</label>
+        </div>
+        <p class="error-msg">الرجاء اختيار رقم التواصل</p>
+        <p class="sub-note" id="shippingNote" hidden>غالباً لا تتصل شركة الشحن، بل ترسل رسالة SMS. وسنرسل لكم بوليصة الشحن لتتبّع شحنتكم.</p>
+      </div>
+      <div class="group reveal" id="phoneField" hidden>
+        <div class="row field bare" data-field="phone">
           <div class="phone-group">
             <span class="phone-prefix">+967</span>
-            <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" placeholder="7XXXXXXXX">
+            <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" placeholder="7XXXXXXXX" aria-label="رقم التواصل">
+            <svg class="valid-tick" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm3.7 5.8-4.4 4.6a.8.8 0 0 1-1.1 0L4.3 8.5a.8.8 0 1 1 1.1-1.1l1.4 1.4 3.8-4a.8.8 0 1 1 1.1 1.1Z"/></svg>
           </div>
           <p class="error-msg" id="phoneError">يجب أن يتكون الرقم من 9 أرقام ويبدأ بالرقم 7</p>
         </div>
       </div>
-      <p class="footnote">سيتم إرسال الإيصال على رقم الواتساب — 9 أرقام تبدأ بـ 7</p>
     </section>
 
-    <section class="section" id="addressSection">
-      <h2 class="section-title">العنوان</h2>
+    <section class="section after-city" id="addressSection">
+      <h2 class="section-title"><label for="locDetail">العنوان</label><span class="note">(التفاصيل تُسهِّل التوصيل)</span></h2>
       <div class="group">
-        <div class="row field" id="locDetailField" data-field="locDetail">
-          <label class="label" for="locDetail">تفاصيل الموقع</label>
-          <textarea id="locDetail" name="locDetail" rows="2" placeholder="الحي، الشارع، أقرب معلم" required></textarea>
-          <p class="error-msg">الرجاء كتابة تفاصيل الموقع</p>
-        </div>
-
-        <div class="row locate-row" id="locateSection">
-          <button type="button" class="locate-btn" id="locateBtn">
-            <span class="locate-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.7 2.3a1 1 0 0 0-1.06-.23l-18 7a1 1 0 0 0 .08 1.9l7.6 2.18 2.18 7.6a1 1 0 0 0 .93.72h.03a1 1 0 0 0 .93-.64l7-18a1 1 0 0 0-.23-1.06Z"/></svg>
-            </span>
-            <span class="locate-text">
-              <span class="locate-title" id="locateBtnLabel">مشاركة موقعي الحالي</span>
-              <span class="locate-status" id="locateStatus" aria-live="polite"></span>
-            </span>
-            <svg class="chevron" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 1 1 7l6 6"/></svg>
-          </button>
+        <div class="row field bare" id="locDetailField" data-field="locDetail">
+          <textarea id="locDetail" name="locDetail" rows="2" placeholder="الحي، الشارع، أقرب معلم" maxlength="200" required></textarea>
+          <p class="error-msg">الرجاء كتابة العنوان بتفاصيل أكثر (10 أحرف على الأقل)</p>
         </div>
       </div>
-      <p class="footnote">مشاركة الموقع اختيارية وتكمّل التفاصيل المكتوبة ولا تغني عنها — الدقة تعتمد على إشارة الجهاز وقد تختلف بضعة أمتار</p>
+      <div class="locate-wrap" id="locateSection">
+        <button type="button" class="locate-big" id="locateBtn">
+          <span class="pin" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>
+          </span>
+          <span id="locateBtnLabel">حدّدي موقعك الحالي لتسليم الطلب بالنقر هنا</span>
+        </button>
+        <p class="sub-note">(إذا كان موقع التسليم مختلفاً عن موقعك الحالي، أخبرينا بالواتساب)</p>
+        <p class="locate-status" id="locateStatus" aria-live="polite"></p>
+        <p class="loc-reminder" id="locReminder" hidden>تحديد الموقع يسهّل عملية التسليم والاستلام<br><span style="color:var(--secondary);font-weight:400">أو اضغطي «إرسال» مرة أخرى للمتابعة</span></p>
+      </div>
     </section>
 
-    <section class="section">
-      <h2 class="section-title">ملاحظات</h2>
+    <section class="section after-city">
+      <h2 class="section-title" id="paymentTitle">أُفضّل الدفع عبر</h2>
+      <div class="choice-field" id="paymentField">
+        <div class="seg compact" role="radiogroup" aria-labelledby="paymentTitle">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <label data-area="sanaa"><input type="radio" name="payment" value="jaib">جيب</label>
+          <label data-area="both"><input type="radio" name="payment" value="kuraimi">الكريمي</label>
+          <label data-area="sanaa"><input type="radio" name="payment" value="cash">نقداً عند التسليم</label>
+          <label data-area="other"><input type="radio" name="payment" value="hawala">حوالة باسم</label>
+          <label data-area="sanaa"><input type="radio" name="payment" value="other">أخرى</label>
+        </div>
+        <p class="error-msg">الرجاء اختيار طريقة الدفع</p>
+      </div>
+      <div class="group reveal" id="paymentOtherField" hidden>
+        <div class="row field bare" data-field="paymentOther">
+          <input type="text" id="paymentOther" name="paymentOther" maxlength="50" placeholder="اكتبي طريقة الدفع" aria-label="طريقة دفع أخرى">
+          <p class="error-msg">الرجاء كتابة طريقة الدفع (3 أحرف على الأقل)</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section after-city">
+      <h2 class="section-title"><label for="notes">ملاحظات</label><span class="note">(اختياري)</span></h2>
       <div class="group">
-        <div class="row field">
-          <label class="label" for="notes">ملاحظات (اختياري)</label>
+        <div class="row field bare">
           <textarea id="notes" name="notes" rows="2" placeholder="اللون، الكمية، أي تفاصيل أخرى"></textarea>
         </div>
       </div>
     </section>
 
-    <div class="actions">
+    <div class="actions after-city">
       <button type="submit" class="submit">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2a9.9 9.9 0 0 0-8.5 14.98L2 22l5.17-1.5A9.93 9.93 0 1 0 12.04 2Zm0 18.13c-1.5 0-2.97-.4-4.25-1.17l-.3-.18-3.07.89.9-2.98-.2-.32a8.2 8.2 0 1 1 6.92 3.76Zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.08-.39-.12-.56.13-.16.25-.64.8-.78.96-.15.16-.29.18-.54.06a6.7 6.7 0 0 1-3.32-2.9c-.25-.43.25-.4.71-1.32.08-.16.04-.3-.02-.42-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.42h-.47c-.16 0-.43.06-.66.3-.23.26-.87.85-.87 2.07s.89 2.4 1.01 2.57c.13.16 1.75 2.67 4.24 3.75 1.57.68 2.19.74 2.98.62.48-.07 1.46-.6 1.67-1.18.2-.58.2-1.08.14-1.18-.06-.1-.23-.16-.48-.29Z"/></svg>
         إرسال عبر واتساب
@@ -550,7 +779,7 @@
   "use strict";
 
   var WHATSAPP_NUMBER = "967779007009";
-  var DRAFT_KEY = "tymo_order_form_draft_v2";
+  var DRAFT_KEY = "tymo_order_form_draft_v4";
 
   var form = document.getElementById("orderForm");
   var cityRadios = form.querySelectorAll('input[name="cityType"]');
@@ -558,9 +787,19 @@
   var otherCityInput = document.getElementById("otherCity");
   var nameInput = document.getElementById("name");
   var nameLabel = document.getElementById("nameLabel");
-  var nameHint = document.getElementById("nameHint");
   var nameError = document.getElementById("nameError");
-  var samePhoneCheckbox = document.getElementById("samePhone");
+  var samePhoneField = document.getElementById("samePhoneField");
+  var samePhoneRadios = form.querySelectorAll('input[name="samePhone"]');
+  var locReminder = document.getElementById("locReminder");
+  var samePhoneTitle = document.getElementById("samePhoneTitle");
+  var shippingNote = document.getElementById("shippingNote");
+  var paymentField = document.getElementById("paymentField");
+  var paymentRadios = form.querySelectorAll('input[name="payment"]');
+  var paymentOtherField = document.getElementById("paymentOtherField");
+  var paymentOtherInput = document.getElementById("paymentOther");
+  var PAYMENT_LABELS = { jaib: "جيب", kuraimi: "الكريمي", cash: "نقداً عند التسليم", hawala: "حوالة باسم", other: "أخرى" };
+  var locTried = false;     // pressed the location button at least once
+  var locReminded = false;  // already reminded once on submit
   var phoneField = document.getElementById("phoneField");
   var phoneInput = document.getElementById("phone");
   var locDetailField = document.getElementById("locDetailField");
@@ -581,19 +820,100 @@
     var digits = el.value.replace(/\D/g, "").slice(0, 9);
     if (el.value !== digits) el.value = digits;
   }
-  whatsappInput.addEventListener("input", sanitizePhoneInput);
-  phoneInput.addEventListener("input", sanitizePhoneInput);
-
   function phoneValid(val) {
     return /^7\d{8}$/.test(val);
   }
+  function updateTick(el) {
+    var f = el.closest(".field");
+    if (f) f.classList.toggle("is-valid", phoneValid(el.value));
+  }
+  [whatsappInput, phoneInput].forEach(function (el) {
+    el.addEventListener("input", function (e) {
+      sanitizePhoneInput(e);
+      updateTick(el);
+      if (phoneValid(el.value)) el.closest(".field").classList.remove("invalid");
+    });
+  });
 
+  // Sliding thumb for every compact choice control.
+  var segs = form.querySelectorAll(".seg");
+  function layoutSeg(seg) {
+    // Hide the hairline divider at the edge and on both sides of the choice.
+    var prevVisible = null;
+    seg.querySelectorAll("label").forEach(function (l) {
+      if (l.hidden) return;
+      var on = l.querySelector("input").checked;
+      var prevOn = prevVisible && prevVisible.querySelector("input").checked;
+      l.classList.toggle("no-div", !prevVisible || on || prevOn);
+      prevVisible = l;
+    });
+    var thumb = seg.querySelector(".seg-thumb");
+    var checked = seg.querySelector("input:checked");
+    var label = checked ? checked.closest("label") : null;
+    if (!label || label.hidden || !seg.offsetWidth) {
+      seg.classList.remove("has-value");
+      return;
+    }
+    var first = !seg.classList.contains("has-value");
+    if (first) {
+      // Appear in place (fade + settle) instead of sliding in from the edge.
+      thumb.style.transition = "none";
+      thumb.style.width = label.offsetWidth + "px";
+      thumb.style.transform = "translateX(" + label.offsetLeft + "px) scale(0.92)";
+      void thumb.offsetWidth;
+      thumb.style.transition = "";
+      seg.classList.add("has-value");
+      thumb.style.transform = "translateX(" + label.offsetLeft + "px) scale(1)";
+    } else {
+      thumb.style.width = label.offsetWidth + "px";
+      thumb.style.transform = "translateX(" + label.offsetLeft + "px) scale(1)";
+    }
+  }
+  function layoutAllSegs() { segs.forEach(layoutSeg); }
+  segs.forEach(function (seg) {
+    seg.addEventListener("change", function () { layoutSeg(seg); });
+  });
+  window.addEventListener("resize", layoutAllSegs);
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(layoutAllSegs);
+    segs.forEach(function (seg) { ro.observe(seg); });
+  }
+
+  function cityValue() {
+    var c = form.querySelector('input[name="cityType"]:checked');
+    return c ? c.value : "";
+  }
   function isOutside() {
-    return form.querySelector('input[name="cityType"]:checked').value === "other";
+    return cityValue() === "other";
+  }
+  function paymentValue() {
+    var c = form.querySelector('input[name="payment"]:checked');
+    return c ? c.value : "";
+  }
+  function updatePaymentFields() {
+    var outside = isOutside();
+    form.querySelectorAll('#paymentField label[data-area]').forEach(function (l) {
+      var area = l.getAttribute("data-area");
+      var show = area === "both" || (outside ? area === "other" : area === "sanaa");
+      l.hidden = !show;
+      var input = l.querySelector("input");
+      if (!show && input.checked) input.checked = false;
+    });
+    var isOther = paymentValue() === "other";
+    paymentOtherField.hidden = !isOther;
+    paymentOtherInput.required = isOther;
+    if (!isOther) paymentOtherInput.value = "";
+    if (paymentValue()) paymentField.classList.remove("invalid");
+    layoutAllSegs();
   }
 
   function updateCityFields() {
     var outside = isOutside();
+    form.classList.toggle("city-chosen", cityValue() !== "");
+    samePhoneTitle.textContent = outside ? "تتواصل بكم شركة الشحن على:" : "يتواصل بكم السائق لتسليم الطلب على:";
+    shippingNote.hidden = !outside;
+    updatePaymentFields();
+    layoutAllSegs();
 
     otherCityField.hidden = !outside;
     otherCityInput.required = outside;
@@ -611,31 +931,50 @@
       locAccuracy = null;
       locTime = null;
       locateStatus.textContent = "";
-      locateBtnLabel.textContent = "مشاركة موقعي الحالي";
+      locateBtnLabel.textContent = "حدّدي موقعك الحالي لتسليم الطلب بالنقر هنا";
+      locateBtn.classList.remove("is-done");
+      locReminder.hidden = true;
     }
 
     if (outside) {
       nameLabel.textContent = "الاسم الكامل (رباعي)";
-      nameHint.textContent = "يجب كتابة الاسم رباعياً (4 أسماء) ليسهل التوصيل من مكتب الشحن";
       nameError.textContent = "يجب كتابة الاسم رباعياً (4 أسماء على الأقل)";
     } else {
       nameLabel.textContent = "الاسم";
-      nameHint.textContent = "سيُكتب هذا الاسم في الإيصال";
       nameError.textContent = "الرجاء كتابة الاسم";
     }
   }
   cityRadios.forEach(function (r) {
     r.addEventListener("change", updateCityFields);
   });
+  paymentRadios.forEach(function (r) {
+    r.addEventListener("change", function () {
+      updatePaymentFields();
+      if (paymentValue() === "other") paymentOtherInput.focus();
+    });
+  });
   updateCityFields();
 
-  function updatePhoneField() {
-    var same = samePhoneCheckbox.checked;
-    phoneField.hidden = same;
-    phoneInput.required = !same;
-    if (same) phoneInput.value = "";
+  function samePhoneValue() {
+    var c = form.querySelector('input[name="samePhone"]:checked');
+    return c ? c.value : "";
   }
-  samePhoneCheckbox.addEventListener("change", updatePhoneField);
+  function updatePhoneField() {
+    var v = samePhoneValue();
+    var showOther = v === "no";
+    phoneField.hidden = !showOther;
+    phoneInput.required = showOther;
+    if (!showOther) phoneInput.value = "";
+    if (v) samePhoneField.classList.remove("invalid");
+    updateTick(phoneInput);
+    layoutAllSegs();
+  }
+  samePhoneRadios.forEach(function (r) {
+    r.addEventListener("change", function () {
+      updatePhoneField();
+      if (samePhoneValue() === "no") phoneInput.focus();
+    });
+  });
   updatePhoneField();
 
   // Phone GPS has a real accuracy floor (walls, weather, chipset) that no
@@ -663,17 +1002,19 @@
     if (IN_APP_BROWSER) {
       msg += "، أو افتحي الرابط في متصفح Chrome أو Safari";
     }
-    return msg + ". لا مشكلة، التفاصيل المكتوبة أعلاه كافية";
+    return msg;
   }
 
   locateBtn.addEventListener("click", function () {
+    locTried = true;
+    locReminder.hidden = true;
     if (!("geolocation" in navigator) || window.isSecureContext === false) {
       locateStatus.textContent = "الجهاز لا يدعم تحديد الموقع — اكتبي التفاصيل أعلاه فقط";
       locateStatus.className = "locate-status err";
       return;
     }
 
-    locateStatus.textContent = "جارِ تحديد موقعك بدقة... (قد يستغرق حتى 20 ثانية)";
+    locateStatus.textContent = "جارِ تحديد موقعك... (قد يستغرق حتى 20 ثانية)";
     locateStatus.className = "locate-status";
     locateBtn.disabled = true;
     locateBtn.classList.add("is-locating");
@@ -738,20 +1079,37 @@
       { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_WATCH_MS }
     );
 
+    // In parallel, ask for a quick network-based (approximate) fix. If the
+    // precise GPS fix never arrives, this one is kept instead of an error.
+    try {
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          if (finished) return;
+          var acc = pos.coords.accuracy;
+          if (!isFinite(acc) || acc <= 0) return;
+          if (!best || acc < best.coords.accuracy) best = pos;
+        },
+        function (err) { if (!lastErr) lastErr = err; },
+        { enableHighAccuracy: false, maximumAge: 10 * 60 * 1000, timeout: MAX_WATCH_MS }
+      );
+    } catch (e) {}
+
     maxTimer = setTimeout(finish, MAX_WATCH_MS);
   });
 
   function showLocated() {
-    locateBtnLabel.textContent = "تحديث الموقع";
+    locTried = true;
+    locReminder.hidden = true;
+    locateBtn.classList.add("is-done");
+    locateBtnLabel.textContent = "تم تحديد الموقع ✓ (اضغطي للتحديث)";
     if (locAccuracy === null) {
-      locateStatus.textContent = "تم تحديد الموقع سابقاً";
-      locateStatus.className = "locate-status ok";
+      locateStatus.textContent = "";
     } else if (locAccuracy <= 50) {
-      locateStatus.textContent = "تم تحديد الموقع بدقة جيدة (~" + locAccuracy + " متر)";
+      locateStatus.textContent = "دقة جيدة (~" + locAccuracy + " متر)";
       locateStatus.className = "locate-status ok";
     } else {
-      locateStatus.textContent = "تم تحديد موقع تقريبي فقط (دقة ~" + locAccuracy + " متر) — يفضّل تفعيل GPS والخروج لمكان مفتوح ثم إعادة المحاولة";
-      locateStatus.className = "locate-status err";
+      locateStatus.textContent = "موقع تقريبي (~" + locAccuracy + " متر) — يمكنك الضغط مرة أخرى لدقة أفضل";
+      locateStatus.className = "locate-status muted";
     }
   }
 
@@ -759,10 +1117,12 @@
     try {
       var data = {
         name: nameInput.value,
-        cityType: form.querySelector('input[name="cityType"]:checked').value,
+        cityType: cityValue(),
+        payment: paymentValue(),
+        paymentOther: paymentOtherInput.value,
         otherCity: otherCityInput.value,
         whatsapp: document.getElementById("whatsapp").value,
-        samePhone: samePhoneCheckbox.checked,
+        samePhone: samePhoneValue(),
         phone: phoneInput.value,
         locDetail: locDetailInput.value,
         notes: document.getElementById("notes").value,
@@ -780,13 +1140,19 @@
       if (!raw) return;
       var data = JSON.parse(raw);
       nameInput.value = data.name || "";
-      if (data.cityType) {
-        var r = form.querySelector('input[name="cityType"][value="' + data.cityType + '"]');
-        if (r) r.checked = true;
-      }
+      // The city choice is never restored: the page always opens on the
+      // city question. Saved answers reappear once the customer picks a city.
       otherCityInput.value = data.otherCity || "";
+      if (data.payment) {
+        var pr = form.querySelector('input[name="payment"][value="' + data.payment + '"]');
+        if (pr) pr.checked = true;
+      }
+      paymentOtherInput.value = data.paymentOther || "";
       document.getElementById("whatsapp").value = data.whatsapp || "";
-      samePhoneCheckbox.checked = data.samePhone === true;
+      if (data.samePhone === "yes" || data.samePhone === "no") {
+        var sp = form.querySelector('input[name="samePhone"][value="' + data.samePhone + '"]');
+        if (sp) sp.checked = true;
+      }
       phoneInput.value = data.phone || "";
       locDetailInput.value = data.locDetail || "";
       document.getElementById("notes").value = data.notes || "";
@@ -799,7 +1165,9 @@
         showLocated();
       }
       updateCityFields();
+      if (data.paymentOther) paymentOtherInput.value = data.paymentOther;
       updatePhoneField();
+      updateTick(whatsappInput);
     } catch (e) {  }
   }
   restoreDraft();
@@ -808,7 +1176,7 @@
 
   function nameValid() {
     var val = nameInput.value.trim();
-    if (!val) return false;
+    if (val.length < 2 || val.length > 60) return false;
     if (isOutside()) {
 
       var parts = val.split(/\s+/).filter(Boolean);
@@ -822,6 +1190,27 @@
     form.querySelectorAll(".field").forEach(function (f) {
       f.classList.remove("invalid");
     });
+    samePhoneField.classList.remove("invalid");
+    if (!samePhoneValue()) {
+      ok = false;
+      samePhoneField.classList.add("invalid");
+    }
+    paymentField.classList.remove("invalid");
+    if (!paymentValue()) {
+      ok = false;
+      paymentField.classList.add("invalid");
+    }
+    // Length rules: city 2-20, address 10-200, other payment 3-50.
+    function minLen(input, n) {
+      if (input.closest("[hidden]")) return;
+      if (input.value.trim().length < n) {
+        ok = false;
+        input.closest(".field").classList.add("invalid");
+      }
+    }
+    if (isOutside()) minLen(otherCityInput, 2);
+    else minLen(locDetailInput, 10);
+    if (paymentValue() === "other") minLen(paymentOtherInput, 3);
 
     if (!nameValid()) {
       ok = false;
@@ -833,7 +1222,7 @@
       whatsappInput.closest(".field").classList.add("invalid");
     }
 
-    if (!samePhoneCheckbox.checked && !phoneValid(phoneInput.value.trim())) {
+    if (samePhoneValue() === "no" && !phoneValid(phoneInput.value.trim())) {
       ok = false;
       phoneInput.closest(".field").classList.add("invalid");
     }
@@ -856,7 +1245,7 @@
     var outside = isOutside();
     var city = outside ? otherCityInput.value.trim() : "صنعاء";
     var whatsapp = whatsappInput.value.trim();
-    var phone = samePhoneCheckbox.checked ? whatsapp : phoneInput.value.trim();
+    var phone = samePhoneValue() === "yes" ? whatsapp : phoneInput.value.trim();
     var locDetail = locDetailInput.value.trim();
     var notes = document.getElementById("notes").value.trim();
 
@@ -879,6 +1268,10 @@
         }
       }
     }
+    var pay = paymentValue();
+    if (pay) {
+      lines.push("*طريقة الدفع:* " + (pay === "other" ? "أخرى: " + paymentOtherInput.value.trim() : PAYMENT_LABELS[pay]));
+    }
     if (notes) {
       lines.push("*ملاحظات:* " + notes);
     }
@@ -893,8 +1286,24 @@
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     if (!validate()) {
-      var firstInvalid = form.querySelector(".field.invalid input, .field.invalid textarea");
-      if (firstInvalid) firstInvalid.focus();
+      var firstInvalid = form.querySelector(".field.invalid input, .field.invalid textarea, .choice-field.invalid");
+      if (firstInvalid) {
+        if (firstInvalid.classList.contains("choice-field")) {
+          firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+          firstInvalid.focus();
+        }
+      }
+      return;
+    }
+    // Sana'a only: remind once if the location button was never pressed.
+    if (!isOutside() && !locTried && !mapsLink && !locReminded) {
+      locReminded = true;
+      locReminder.hidden = false;
+      locateBtn.classList.remove("attention");
+      void locateBtn.offsetWidth;
+      locateBtn.classList.add("attention");
+      locateSection.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     var message = buildMessage();
