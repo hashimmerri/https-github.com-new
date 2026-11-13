@@ -780,6 +780,7 @@
 
   var WHATSAPP_NUMBER = "967779007009";
   var DRAFT_KEY = "tymo_order_form_draft_v4";
+  var DRAFT_TTL_MS = 3 * 60 * 60 * 1000; // expire saved form data after 3 hours of inactivity
 
   var form = document.getElementById("orderForm");
   var cityRadios = form.querySelectorAll('input[name="cityType"]');
@@ -1133,7 +1134,8 @@
         notes: document.getElementById("notes").value,
         mapsLink: mapsLink,
         locAccuracy: locAccuracy,
-        locTime: locTime
+        locTime: locTime,
+        savedAt: Date.now()
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
     } catch (e) {  }
@@ -1144,6 +1146,11 @@
       var raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       var data = JSON.parse(raw);
+      // Remove drafts after 3 hours without activity (and legacy drafts without a timestamp).
+      if (typeof data.savedAt !== "number" || Date.now() - data.savedAt >= DRAFT_TTL_MS || Date.now() < data.savedAt) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
       nameInput.value = data.name || "";
       // The city choice is never restored: the page always opens on the
       // city question. Saved answers reappear once the customer picks a city.
