@@ -673,3 +673,161 @@
     frame();
   }
 })();
+
+/* ---------- 7. 5B reviews as stories (26 Nov, owner).
+   Tap a review in the strip: full screen, one review at a time, like Instagram stories.
+   Moves on by itself every 8 s (time to read); tap the right side = next, left side = back;
+   press and hold = pause; swipe sideways = next/back; swipe down, ✕, Esc or the phone's Back = close.
+   After the last review: an end card with a link to the owner's Instagram highlight. ---------- */
+(function () {
+  var opens = document.querySelectorAll(".rv-open");
+  if (!opens.length) return;
+  var DUR = 8000;
+  var IG = (document.querySelector(".rv-more") || {}).href || "https://www.instagram.com/tymo.yemen";
+  var list = [].map.call(opens, function (b) { var im = b.querySelector("img"); return { src: im.getAttribute("data-full"), alt: b.getAttribute("aria-label") }; });
+  var icoX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var icoIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r=".6"/></svg>';
+
+  var box = document.createElement("div");
+  box.className = "story"; box.hidden = true;
+  box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.setAttribute("aria-label", "آراء عميلاتنا");
+  box.innerHTML =
+    '<div class="story-stage">' +
+      '<img class="story-img" alt="">' +
+      '<div class="story-top"><div class="story-bars">' + list.map(function () { return "<i><b></b></i>"; }).join("") + '</div>' +
+        '<div class="story-head"><span class="story-who"><img src="img/logo-pink.webp" alt="">آراء عميلاتنا</span>' +
+        '<button type="button" class="story-x" aria-label="إغلاق">' + icoX + '</button></div></div>' +
+      '<button type="button" class="story-tap prev" aria-label="الرأي السابق"></button>' +
+      '<button type="button" class="story-tap next" aria-label="الرأي التالي"></button>' +
+      '<div class="story-end" aria-live="polite"><img src="img/logo-white.webp" alt="TYMO">' +
+        '<p>وهذا جزء بسيط من آراء عميلاتنا</p>' +
+        '<a class="btn btn-primary" href="' + IG + '" target="_blank" rel="noopener">' + icoIG + 'شوفي المزيد على إنستغرام</a>' +
+        '<button type="button" class="back">رجوع للموقع</button></div>' +
+    '</div>';
+  document.body.appendChild(box);
+
+  var stage = box.querySelector(".story-stage"), img = box.querySelector(".story-img");
+  var bars = box.querySelectorAll(".story-bars b"), end = box.querySelector(".story-end");
+  var i = 0, t0 = 0, spent = 0, raf = 0, paused = false, ready = false, atEnd = false, opener = null, pushed = false;
+
+  var paint = function () {
+    for (var k = 0; k < bars.length; k++) bars[k].style.width = (atEnd || k < i) ? "100%" : (k > i ? "0%" : "");
+  };
+  var tick = function (now) {
+    raf = 0;
+    if (box.hidden || atEnd) return;
+    if (!paused && ready) { spent += now - t0; }
+    t0 = now;
+    var p = Math.min(1, spent / DUR);
+    bars[i].style.width = (p * 100).toFixed(2) + "%";
+    if (p >= 1) { go(1); return; }
+    raf = requestAnimationFrame(tick);
+  };
+  var run = function () { if (!raf) { t0 = performance.now(); raf = requestAnimationFrame(tick); } };
+  var show = function (n) {
+    i = n; spent = 0; ready = false; atEnd = false;
+    end.classList.remove("on");
+    img.classList.remove("ready");
+    img.alt = list[i].alt;
+    var want = list[i].src;
+    img.onload = function () { if (img.getAttribute("src") === want) { ready = true; img.classList.add("ready"); } };
+    img.src = want;
+    if (img.complete && img.naturalWidth) { ready = true; img.classList.add("ready"); }
+    if (list[i + 1]) { var pre = new Image(); pre.src = list[i + 1].src; }       /* the next one is ready before she gets there */
+    paint(); bars[i].style.width = "0%"; run();
+  };
+  var showEnd = function () {
+    atEnd = true; paint(); end.classList.add("on");
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+  };
+  var go = function (d) {
+    if (atEnd) { if (d < 0) show(list.length - 1); return; }
+    var n = i + d;
+    if (n < 0) { show(0); return; }
+    if (n >= list.length) { showEnd(); return; }
+    show(n);
+  };
+  var open = function (n, from) {
+    opener = from;
+    box.hidden = false;
+    document.documentElement.classList.add("story-lock");
+    requestAnimationFrame(function () { box.classList.add("on"); });
+    if (!pushed) { try { history.pushState({ story: 1 }, ""); pushed = true; } catch (e) {} }
+    show(n);
+    box.querySelector(".story-x").focus({ preventScroll: true });
+  };
+  var shut = function (fromBack) {
+    if (box.hidden) return;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    box.classList.remove("on");
+    document.documentElement.classList.remove("story-lock");
+    stage.style.setProperty("--dy", "0px"); stage.style.setProperty("--sc", "1");
+    setTimeout(function () { box.hidden = true; img.removeAttribute("src"); }, 280);
+    if (pushed && !fromBack) { pushed = false; try { history.back(); } catch (e) {} }
+    pushed = false;
+    if (opener) opener.focus({ preventScroll: true });
+  };
+  window.addEventListener("popstate", function () { if (!box.hidden) { pushed = false; shut(true); } });
+
+  [].forEach.call(opens, function (b) {
+    b.addEventListener("click", function () { open(+b.getAttribute("data-i"), b); });
+  });
+  box.querySelector(".story-x").addEventListener("click", function () { shut(); });
+  end.querySelector(".back").addEventListener("click", function () { shut(); });
+
+  /* one gesture model for finger and mouse: short tap = next/back by side,
+     hold = pause, sideways swipe = next/back, downward swipe = close */
+  var sx = 0, sy = 0, st = 0, down = false, held = false, holdT = 0, side = 0;
+  stage.addEventListener("pointerdown", function (e) {
+    if (e.target.closest(".story-x, .story-end a, .story-end .back")) return;
+    down = true; held = false; sx = e.clientX; sy = e.clientY; st = e.timeStamp;
+    var r = stage.getBoundingClientRect(); side = (e.clientX - r.left) > r.width / 2 ? 1 : -1;
+    holdT = setTimeout(function () { held = true; paused = true; }, 220);
+    stage.style.transition = "none";
+  });
+  window.addEventListener("pointermove", function (e) {
+    if (!down) return;
+    var dy = e.clientY - sy;
+    if (dy > 8 && Math.abs(dy) > Math.abs(e.clientX - sx)) {
+      clearTimeout(holdT); paused = true;
+      stage.style.setProperty("--dy", dy.toFixed(0) + "px");
+      stage.style.setProperty("--sc", Math.max(.85, 1 - dy / 1400).toFixed(3));
+    }
+  });
+  var up = function (e) {
+    if (!down) return;
+    down = false; clearTimeout(holdT);
+    stage.style.transition = "";
+    var dx = e.clientX - sx, dy = e.clientY - sy;
+    if (dy > 110 && dy > Math.abs(dx)) { shut(); return; }
+    stage.style.setProperty("--dy", "0px"); stage.style.setProperty("--sc", "1");
+    paused = false;
+    if (e.type === "pointercancel") return;
+    if (e.target.closest && e.target.closest(".story-x, .story-end a, .story-end .back")) return;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { go(dx < 0 ? 1 : -1); return; }
+    if (held || Math.abs(dx) > 10 || Math.abs(dy) > 10) return;           /* it was a hold, not a tap */
+    if (atEnd) { if (side < 0) go(-1); return; }
+    go(side);
+  };
+  window.addEventListener("pointerup", up);
+  window.addEventListener("pointercancel", up);
+  /* the two tap areas are real buttons for keyboards and screen readers; pointer taps are handled above */
+  box.querySelector(".story-tap.prev").addEventListener("click", function (e) { if (e.detail === 0) go(-1); });
+  box.querySelector(".story-tap.next").addEventListener("click", function (e) { if (e.detail === 0) go(1); });
+  stage.addEventListener("contextmenu", function (e) { e.preventDefault(); });   /* long-press = pause, not "save image" */
+  document.addEventListener("keydown", function (e) {
+    if (box.hidden) return;
+    if (e.key === "Escape") { e.preventDefault(); shut(); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); go(1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); go(-1); }
+    else if (e.key === " ") { e.preventDefault(); paused = !paused; }
+    else if (e.key === "Tab") {                                              /* keep focus inside while open */
+      var f = [].filter.call(box.querySelectorAll("button, a"), function (el) { return el.offsetParent !== null; });
+      if (!f.length) return;
+      var a = f[0], z = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+      else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+    }
+  });
+  document.addEventListener("visibilitychange", function () { if (document.hidden && !box.hidden) paused = true; else if (!box.hidden && !down) paused = false; });
+})();
