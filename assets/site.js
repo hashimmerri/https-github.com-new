@@ -832,33 +832,15 @@
   document.addEventListener("visibilitychange", function () { if (document.hidden && !box.hidden) paused = true; else if (!box.hidden && !down) paused = false; });
 })();
 
-/* ---------- 8. 6A slide hint (26 Nov, owner): a small label on the buy-card photos says she can swipe;
-   after her first swipe it becomes a quiet counter (3 / 10). The first time the photos are well in view
-   they peek once (glide a little and come back). Reduced motion: label only, no peek. ---------- */
+/* ---------- 8. 6A slide hint (26 Nov, owner): no text, no counter. The first time the buy-card photos
+   are well in view they peek once (glide a little and come back), so she sees they can be swiped.
+   Skipped if she already touched them, and with reduced motion. ---------- */
 (function () {
   var mini = document.querySelector(".buy-card .mini"), s = mini && mini.querySelector(".track");
   if (!s || s.children.length < 2) return;
-  var n = s.children.length, swiped = false;
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var chip = document.createElement("span");
-  chip.className = "swipe-chip"; chip.setAttribute("aria-hidden", "true");
-  chip.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>اسحبي لمشاهدة الصور</span>';
-  mini.appendChild(chip);
-  var at = function () {
-    var tr = s.getBoundingClientRect(), mid = (tr.left + tr.right) / 2, best = 0, bd = 1e9;
-    [].forEach.call(s.children, function (c, j) { var r = c.getBoundingClientRect(), d = Math.abs((r.left + r.right) / 2 - mid); if (d < bd) { bd = d; best = j; } });
-    return best;
-  };
-  var t = 0, peeking = false;
-  s.addEventListener("scroll", function () {
-    if (peeking || t) return;
-    t = requestAnimationFrame(function () {
-      t = 0;
-      var i = at();
-      if (!swiped && i > 0) { swiped = true; chip.classList.add("count"); }
-      if (swiped) chip.innerHTML = '<span dir="ltr">' + (i + 1) + " / " + n + "</span>";
-    });
-  }, { passive: true });
+  var swiped = false, peeking = false;
+  s.addEventListener("scroll", function () { if (!peeking) swiped = true; }, { passive: true });
   if (reduce || !("IntersectionObserver" in window)) return;
   var stop = false;
   ["pointerdown", "touchstart", "wheel"].forEach(function (ev) { s.addEventListener(ev, function () { stop = true; }, { passive: true }); });
@@ -874,7 +856,7 @@
         var p = Math.min(1, (now - t0) / 1600);
         var e = Math.sin(p * Math.PI);                       /* out and back, softly */
         if (stop) {                                          /* she touched it: her swipe wins, we just step away */
-          s.style.scrollSnapType = ""; peeking = false; s.dispatchEvent(new Event("scroll")); return;
+          s.style.scrollSnapType = ""; peeking = false; return;
         }
         s.scrollLeft = x0 + dir * far * e * (2 - e);
         if (p < 1) requestAnimationFrame(step);
