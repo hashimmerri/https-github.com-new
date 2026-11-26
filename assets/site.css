@@ -516,6 +516,7 @@ body{padding-bottom:0}
 .banner .slide{overflow:hidden}
 .banner .slide img{transform:translate3d(0,var(--py,0),0) scale(1.12)}
 .banner .dots{position:absolute;bottom:34px;inset-inline:0;margin:0}
+.banner .dots button{width:18px}   /* 27 Nov: 14 photos, keep the dots on one line */
 .banner .dots button::before{background:rgba(255,255,255,.55)}
 .banner .dots button[aria-selected="true"]::before{background:#fff}
 .who-band{position:relative;z-index:1;margin-top:-24px;border-radius:24px 24px 0 0;min-height:0;display:block}
