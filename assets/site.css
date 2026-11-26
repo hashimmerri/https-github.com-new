@@ -962,7 +962,7 @@ body{padding-bottom:0}
 .banner.fade .track{display:grid;grid-template:1fr / 1fr;overflow:hidden;scroll-snap-type:none;touch-action:pan-y}
 .banner.fade .slide{grid-area:1 / 1;opacity:0;transition:opacity 1.8s cubic-bezier(.4,0,.2,1)}
 .banner.fade .slide.was{opacity:1;z-index:1}
-.banner.fade .slide.is-on{opacity:1;z-index:2;animation:settle-zoom 9s cubic-bezier(.25,.1,.25,1) both}
+.banner.fade .slide.is-on{opacity:1;z-index:2;animation:settle-zoom 6.5s cubic-bezier(.25,.1,.25,1) both}
 @keyframes settle-zoom{from{transform:scale(1.07)}to{transform:scale(1)}}
 
 /* 3 · Hair-type crossfade: a copy of the old photos fades away over the new ones */
