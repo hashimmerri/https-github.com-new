@@ -1236,3 +1236,13 @@ video.reel-item{display:block;border-radius:18px;background:#111214}
 .story-end .back{background:none;border:0;color:rgba(255,255,255,.8);font:inherit;font-size:var(--t-sm);min-height:44px;padding:0 16px;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
 html.story-lock,html.story-lock body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.story,.story-stage,.story-img{transition:none}}
+
+/* 6E (26 Nov, owner): switching to ريال قديم pushed the switch onto a second line on phones
+   («28,000 ريال قديم» is twice as wide as «200 ر.س»). The currency word now sits under the number,
+   so both prices take the same width, the row stays on one line and nothing jumps. */
+.price-row{flex-wrap:nowrap}
+.price-row .seg{flex:none}
+.price-row .price{flex-direction:column;align-items:flex-start;gap:0;min-width:0}
+.price-row .price b{line-height:1.1}
+.price-row .price span{line-height:1.4}
+@media (max-width:349px){.price-row{flex-direction:column;align-items:flex-start}}   /* very small phones: switch on its own line in both currencies, so still no jump */
