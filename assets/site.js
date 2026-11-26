@@ -831,3 +831,80 @@
   });
   document.addEventListener("visibilitychange", function () { if (document.hidden && !box.hidden) paused = true; else if (!box.hidden && !down) paused = false; });
 })();
+
+/* ---------- 8. 6A slide hint (26 Nov, owner): a small label on the buy-card photos says she can swipe;
+   after her first swipe it becomes a quiet counter (3 / 10). The first time the photos are well in view
+   they peek once (glide a little and come back). Reduced motion: label only, no peek. ---------- */
+(function () {
+  var mini = document.querySelector(".buy-card .mini"), s = mini && mini.querySelector(".track");
+  if (!s || s.children.length < 2) return;
+  var n = s.children.length, swiped = false;
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var chip = document.createElement("span");
+  chip.className = "swipe-chip"; chip.setAttribute("aria-hidden", "true");
+  chip.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>اسحبي لمشاهدة الصور</span>';
+  mini.appendChild(chip);
+  var at = function () {
+    var tr = s.getBoundingClientRect(), mid = (tr.left + tr.right) / 2, best = 0, bd = 1e9;
+    [].forEach.call(s.children, function (c, j) { var r = c.getBoundingClientRect(), d = Math.abs((r.left + r.right) / 2 - mid); if (d < bd) { bd = d; best = j; } });
+    return best;
+  };
+  var t = 0, peeking = false;
+  s.addEventListener("scroll", function () {
+    if (peeking || t) return;
+    t = requestAnimationFrame(function () {
+      t = 0;
+      var i = at();
+      if (!swiped && i > 0) { swiped = true; chip.classList.add("count"); }
+      if (swiped) chip.innerHTML = '<span dir="ltr">' + (i + 1) + " / " + n + "</span>";
+    });
+  }, { passive: true });
+  if (reduce || !("IntersectionObserver" in window)) return;
+  var stop = false;
+  ["pointerdown", "touchstart", "wheel"].forEach(function (ev) { s.addEventListener(ev, function () { stop = true; }, { passive: true }); });
+  var io = new IntersectionObserver(function (es) {
+    if (!es[0].isIntersecting || es[0].intersectionRatio < 0.6) return;
+    io.disconnect();
+    setTimeout(function () {
+      if (stop || swiped) return;
+      var rtl = getComputedStyle(s).direction === "rtl", dir = rtl ? -1 : 1, x0 = s.scrollLeft, far = Math.min(90, s.clientWidth * 0.22), t0 = 0;
+      peeking = true; s.style.scrollSnapType = "none";
+      var step = function (now) {
+        if (!t0) t0 = now;
+        var p = Math.min(1, (now - t0) / 1600);
+        var e = Math.sin(p * Math.PI);                       /* out and back, softly */
+        if (stop) {                                          /* she touched it: her swipe wins, we just step away */
+          s.style.scrollSnapType = ""; peeking = false; s.dispatchEvent(new Event("scroll")); return;
+        }
+        s.scrollLeft = x0 + dir * far * e * (2 - e);
+        if (p < 1) requestAnimationFrame(step);
+        else { s.scrollLeft = x0; s.style.scrollSnapType = ""; setTimeout(function () { peeking = false; }, 80); }
+      };
+      requestAnimationFrame(step);
+    }, 700);
+  }, { threshold: [0, 0.6] });
+  io.observe(mini);
+})();
+
+/* ---------- 9. Floating Order button (11) (26 Nov, owner): until she has seen the offer card (6A–6G:
+   photos, what's in the box, warranty, delivery, price, payment), the first tap takes her down to it
+   instead of the form. Once she has seen it, the button goes to tymoye.shop/order as usual.
+   Without JavaScript the button simply opens /order. ---------- */
+(function () {
+  var btn = document.querySelector(".dock .btn-primary"), card = document.querySelector(".buy-card");
+  if (!btn || !card || !("IntersectionObserver" in window)) return;
+  var seen = false;
+  try { seen = sessionStorage.getItem("tymo-seen-offer") === "1"; } catch (e) {}
+  var mark = function () { seen = true; try { sessionStorage.setItem("tymo-seen-offer", "1"); } catch (e) {} };
+  var price = card.querySelector(".price-row") || card;
+  var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { mark(); io.disconnect(); } }, { threshold: 0.9 });
+  if (!seen) io.observe(price);
+  btn.addEventListener("click", function (e) {
+    if (seen) return;
+    e.preventDefault();
+    var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var y = card.getBoundingClientRect().top + window.pageYOffset - 24;
+    window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
+    mark(); io.disconnect();                                    /* she has now been shown it: next tap = the form */
+  });
+})();
