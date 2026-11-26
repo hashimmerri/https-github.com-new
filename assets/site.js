@@ -530,6 +530,16 @@
     return state;
   };
 
+  /* 26 Nov: banner photos 3–8 wait in data-src so the first screen downloads ≈1 MB less.
+     Each one loads just before its turn, on any touch of the banner, or quietly once the page has opened. */
+  var wake = function (img) { if (img && img.getAttribute("data-src") && !img.getAttribute("src")) img.src = img.getAttribute("data-src"); };
+  var wakeAll = function () { [].forEach.call(document.querySelectorAll("img[data-src]"), wake); };
+  if (document.readyState === "complete") setTimeout(wakeAll, 1200);
+  else window.addEventListener("load", function () { setTimeout(wakeAll, 1200); });
+  [].forEach.call(document.querySelectorAll(".banner"), function (b) {
+    ["pointerdown", "touchstart", "scroll"].forEach(function (ev) { b.addEventListener(ev, wakeAll, { passive: true, capture: true }); });
+  });
+
   /* Opening banner: photos crossfade with a slow, settling zoom instead of sliding sideways.
      Swipe and dots still work. Weak phones and reduce-motion keep the plain sliding banner. */
   var fadeBanner = function (c) {
@@ -551,8 +561,9 @@
         s.setAttribute("aria-hidden", j === i ? "false" : "true");
       });
       dots.forEach(function (d, j) { d.setAttribute("aria-selected", j === i ? "true" : "false"); });
+      wake(slides[i].querySelector("img"));
       var next = slides[(i + 1) % n].querySelector("img");
-      if (next) next.loading = "eager";                      /* the next photo is ready before its turn */
+      if (next) { next.loading = "eager"; wake(next); }      /* the next photo is ready before its turn */
     };
     /* Touching, swiping, hovering or tapping a dot never stops the slideshow (owner's choice, 17 Nov).
        A swipe or dot just restarts the timer from that photo. Only the pause button stops it. */
