@@ -1247,3 +1247,17 @@ html.story-lock,html.story-lock body{overflow:hidden}
 .price-row .price b{line-height:1.1}
 .price-row .price span{line-height:1.4}
 @media (max-width:349px){.price-row{flex-direction:column;align-items:flex-start}}   /* very small phones: switch on its own line in both currencies, so still no jump */
+
+/* 27 Nov · design review fixes 1–4 (owner) */
+/* 1 · white on #FF005E is 3.9:1 — passes only as large text (≥18.66px bold), so Order labels are bold 19px; the pink panel text is solid white and a step heavier */
+.btn-primary,.cta-row .btn-primary{font-size:19px;font-weight:700}
+.who-intro{color:#fff;font-weight:500}
+.who-facts li span{color:#fff;font-weight:500}
+/* 2 · video controls: 44px tap areas without making the bar bigger (invisible touch padding) */
+.vc-btn{position:relative}
+.vc-btn::after{content:"";position:absolute;inset:-6px}
+.vc-seek{height:44px;margin-block:-6px}
+/* 3 · hair-type faces fit inside 320px phones (no sideways drag) */
+@media (max-width:359px){.faces [role=tab]{width:62px}.faces [role=tab] img{width:52px;height:52px}}
+/* 4 · «هذا تحدّينا.» bold, so pink on grey counts as large text (3.5:1 ≥ 3:1) */
+.os-dare{font-weight:700}
