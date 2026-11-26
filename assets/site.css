@@ -1183,7 +1183,7 @@ video.reel-item{display:block;border-radius:18px;background:#111214}
 .press{list-style:none;display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:var(--s3);max-width:360px;margin:var(--s3) auto 0}
 .press li{height:clamp(34px,10vw,44px);flex:none}
 .press li.wide{height:clamp(18px,5.5vw,24px)}
-.press img{height:100%;width:auto;mix-blend-mode:multiply;filter:grayscale(1) contrast(1.1);opacity:.8}
+.press img{height:100%;width:auto;opacity:.8}
 @media (prefers-reduced-motion:reduce){.brand-reel .slide,.brand-reel figcaption{transition:none}}
 
 /* Weak phones / data saver: keep it calm and cheap */
